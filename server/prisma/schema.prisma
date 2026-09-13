@@ -1,0 +1,374 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    String                @id @default(cuid())
+  email                 String                @unique
+  password              String
+  fullName              String
+  role                  String                @default("HEAD")
+  status                String                @default("ACTIVE")
+  isActive              Boolean               @default(true)
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+  student               Student?
+  teacher               Teacher?
+  auditLogs             AuditLog[]
+  supervisorPermissions SupervisorPermission[]
+  createdBy             String?
+  createdUsers          User[]                @relation("CreatedByUser")
+  createdByUser         User?                 @relation("CreatedByUser", fields: [createdBy], references: [id])
+  createdResources      Resource[]            @relation("ResourceCreator")
+  createdAnnouncements  Announcement[]        @relation("AnnouncementCreator")
+  createdTests          TestRecord[]           @relation("TestCreator")
+  notifications         Notification[]
+  createdFeeStructures  FeeStructure[]         @relation("FeeStructureCreator")
+  payments              Payment[]
+}
+
+model Student {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id])
+  studentId     String   @unique @default(cuid())
+  className     String?
+  batch         String?
+  subjects      String?
+  guardianName  String?
+  guardianPhone String?
+  accountStatus String   @default("ACTIVE")
+  admissionDate DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  enrollments   StudentEnrollment[]
+  fees          StudentFee[]
+  payments      Payment[]
+}
+
+model Teacher {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id])
+  teacherId     String   @unique @default(cuid())
+  classes       String?
+  subjects      String?
+  batches       String?
+  accountStatus String   @default("ACTIVE")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  assignments   TeacherAssignment[]
+  resources     Resource[]
+  timetable     Timetable[]
+  tests         TestRecord[]
+}
+
+model SupervisorPermission {
+  id          String   @id @default(cuid())
+  userId      String
+  permission  String
+  grantedBy   String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, permission])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  userRole    String?
+  action      String
+  targetType  String?
+  targetId    String?
+  details     String?
+  createdAt   DateTime @default(now())
+  user        User?    @relation(fields: [userId], references: [id])
+}
+
+model Resource {
+  id             String   @id @default(cuid())
+  title          String
+  type           String
+  description    String?
+  className      String
+  subject        String
+  topic          String
+  fileName       String
+  storedFileName String   @unique
+  mimeType       String
+  fileSize       Int
+  teacherId      String
+  createdById    String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  teacher        Teacher  @relation(fields: [teacherId], references: [id])
+  createdBy      User     @relation("ResourceCreator", fields: [createdById], references: [id])
+
+  @@index([className, subject])
+  @@index([teacherId])
+}
+
+model Announcement {
+  id          String   @id @default(cuid())
+  title       String
+  message     String
+  audience    String   @default("ALL")
+  className   String?
+  subject     String?
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   User?    @relation("AnnouncementCreator", fields: [createdById], references: [id])
+}
+
+model FeeRecord {
+  id            String   @id @default(cuid())
+  studentId     String
+  studentName   String
+  amount        String
+  dueDate       String?
+  status        String   @default("PENDING")
+  paymentStatus String   @default("NOT_PAID")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model FeeStructure {
+  id             String   @id @default(cuid())
+  name           String
+  description    String?
+  className      String
+  totalAmountPaise Int
+  isActive       Boolean  @default(true)
+  createdById    String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  createdBy      User     @relation("FeeStructureCreator", fields: [createdById], references: [id])
+  studentFees    StudentFee[]
+
+  @@index([className, isActive])
+}
+
+model StudentFee {
+  id                 String   @id @default(cuid())
+  studentId          String
+  feeStructureId     String
+  totalAmountPaise   Int
+  paidAmountPaise    Int      @default(0)
+  currency           String   @default("INR")
+  status             String   @default("OUTSTANDING")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  student            Student  @relation(fields: [studentId], references: [id])
+  feeStructure       FeeStructure @relation(fields: [feeStructureId], references: [id])
+  payments           Payment[]
+
+  @@unique([studentId, feeStructureId])
+  @@index([studentId, status])
+}
+
+model Payment {
+  id                 String   @id @default(cuid())
+  studentId          String
+  studentFeeId       String
+  amountPaise        Int
+  currency           String   @default("INR")
+  status             String   @default("CREATED")
+  feeType            String
+  gateway            String   @default("RAZORPAY")
+  gatewayOrderId     String?  @unique
+  gatewayPaymentId   String?  @unique
+  gatewaySignature   String?
+  idempotencyKey     String   @unique
+  isSandbox          Boolean  @default(true)
+  failureReason      String?
+  metadataJson       String?
+  createdById         String
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  student            Student  @relation(fields: [studentId], references: [id])
+  studentFee         StudentFee @relation(fields: [studentFeeId], references: [id])
+  createdBy          User     @relation(fields: [createdById], references: [id])
+  receipt            PaymentReceipt?
+
+  @@index([studentId, status])
+  @@index([createdAt, status])
+}
+
+model PaymentReceipt {
+  id                String   @id @default(cuid())
+  paymentId         String   @unique
+  receiptNumber     String   @unique
+  studentName       String
+  studentIdentifier String
+  className         String?
+  amountPaise       Int
+  currency          String   @default("INR")
+  feeDescription    String
+  status            String
+  issuedAt          DateTime @default(now())
+  payment           Payment  @relation(fields: [paymentId], references: [id])
+}
+
+model TestRecord {
+  id          String   @id @default(cuid())
+  title       String
+  className   String
+  subject     String
+  topic       String
+  date        String
+  time        String
+  instructions String?
+  status      String   @default("UPCOMING")
+  createdById String?
+  teacherId   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   User?    @relation("TestCreator", fields: [createdById], references: [id])
+  teacher     Teacher? @relation(fields: [teacherId], references: [id])
+
+  @@index([className, subject])
+}
+
+model TeacherAssignment {
+  id        String   @id @default(cuid())
+  teacherId String
+  className String
+  subject   String
+  batch     String?
+  createdAt DateTime @default(now())
+  teacher   Teacher  @relation(fields: [teacherId], references: [id])
+
+  @@unique([teacherId, className, subject, batch])
+  @@index([className, subject])
+}
+
+model StudentEnrollment {
+  id        String   @id @default(cuid())
+  studentId String
+  className String
+  subject   String
+  batch     String?
+  createdAt DateTime @default(now())
+  student   Student  @relation(fields: [studentId], references: [id])
+
+  @@unique([studentId, className, subject, batch])
+  @@index([className, subject])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId, isRead])
+}
+
+model Course {
+  id            String    @id @default(cuid())
+  name          String
+  slug          String    @unique
+  category      String
+  classLevel    String
+  description   String?
+  isActive      Boolean   @default(true)
+  subjects      String
+  highlights    String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Subject {
+  id        String   @id @default(cuid())
+  name      String
+  classLevel String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Batch {
+  id        String   @id @default(cuid())
+  name      String
+  label     String?
+  startTime String
+  endTime   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Timetable {
+  id        String   @id @default(cuid())
+  day       String
+  classLevel String
+  subject   String?
+  teacher   String?
+  batch     String?
+  room      String?
+  teacherId  String?
+  startTime String
+  endTime   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  assignedTeacher Teacher? @relation(fields: [teacherId], references: [id])
+}
+
+model Facility {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  image       String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Enquiry {
+  id          String   @id @default(cuid())
+  studentName String
+  parentName  String
+  phone       String
+  email       String
+  className   String
+  subject     String
+  batch       String
+  message     String
+  status      String   @default("NEW")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AcademySettings {
+  id          String   @id @default(cuid())
+  siteName    String   @default("Manish Mishra Academy")
+  tagline     String   @default("Learn Better. Think Smarter. Achieve More.")
+  description String?
+  phone       String?
+  email       String?
+  address     String?
+  whatsapp    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Testimonial {
+  id        String   @id @default(cuid())
+  name      String
+  role      String?
+  quote     String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

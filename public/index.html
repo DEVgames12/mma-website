@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ORRERY / Earth &amp; Milky Way</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="observatory">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="Orrery home"><span class="brand-dot"></span><span>ORRERY</span><small>01 / 03</small></a>
+        <div class="status"><span class="live-dot"></span>LIVE SIMULATION <span class="status-divider"></span> SOLAR SYSTEM</div>
+        <button class="info-button" id="aboutButton" type="button" aria-label="About this simulation">i</button>
+      </header>
+      <section class="scene-wrap" aria-label="Interactive 3D Earth and Milky Way visualization">
+        <div id="scene" class="scene"></div><div class="scene-vignette"></div>
+        <div class="title-block"><p class="eyebrow">SOL SYSTEM / 03.14.2025</p><h1>Earth,<br /><em>in motion.</em></h1><p class="intro">Our home planet in a living model of the Sun, planets, major moons, asteroids, and the Milky Way. Drag to orbit.</p></div>
+        <div class="coordinates"><span>LAT</span> 28.6139° N <span>LON</span> 77.2090° E</div><div class="scale-readout"><span>ORBITAL VIEW</span><strong id="distanceValue">1.00×</strong></div><div class="scene-hint">DRAG TO ORBIT <span></span> SCROLL TO ZOOM</div>
+      </section>
+      <aside class="control-dock">
+        <div class="dock-heading"><span>OBSERVATION DECK</span><span class="mono">SYS. 001</span></div>
+        <div class="control-row"><label for="speedControl">Rotation speed <output id="speedValue">0.35×</output></label><input id="speedControl" type="range" min="0" max="1" step="0.01" value="0.35" /></div>
+        <div class="control-row"><label for="starControl">Star density <output id="starValue">HIGH</output></label><input id="starControl" type="range" min="0" max="2" step="1" value="2" /></div>
+        <div class="toggle-row"><button class="toggle is-on" id="cloudToggle" type="button" aria-pressed="true"><span></span></button><span>Atmospheric clouds</span></div>
+        <div class="toggle-row"><button class="toggle is-on" id="gridToggle" type="button" aria-pressed="true"><span></span></button><span>Orbital grid</span></div>
+        <button class="surface-button" id="surfaceButton" type="button">Explore cities &amp; homes <span>⌖</span></button>
+        <a class="maps-button" id="mapsButton" href="https://www.google.com/maps/@?api=1&amp;map_action=map&amp;center=51.5074,-0.1278&amp;zoom=12" target="_blank" rel="noopener noreferrer">Open London in Google Maps <span>↗</span></a>
+        <button class="reset-button" id="resetButton" type="button">Reset view <span>↗</span></button>
+      </aside>
+      <footer class="footer-bar"><span>EARTH / SOL III</span><span>24h ROTATION CYCLE</span><span class="footer-right">PROCEDURAL DEEP SPACE · 2025</span></footer>
+      <div class="modal" id="aboutModal" hidden><div class="modal-card"><button id="closeAbout" type="button">×</button><p class="eyebrow">ABOUT THE SIMULATION</p><h2>A small window into a big sky.</h2><p>Earth uses NASA imagery mapped onto a real-time 3D sphere, with animated clouds and atmosphere. The wider model includes all eight planets, Pluto, Saturn's rings, major moons, asteroid belt, comet path, and a procedural Milky Way.</p></div></div>
+    </main>
+    <script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
