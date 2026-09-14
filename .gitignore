@@ -12,3 +12,7 @@ server/private-uploads/
 npm-debug.log*
 coverage/
 .vite/
+.venv/
+__pycache__/
+output/
+*.pyc
